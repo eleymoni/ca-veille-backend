@@ -4,14 +4,15 @@ const { checkBody } = require("../modules/checkBody");
 const rssFinder = require("rss-finder");
 
 /* create new feed */
-router.post("/create", async (req, res) => {
-    if (!checkBody(req.body, ["url"])) {
-        return res
-            .status(400)
-            .json({ result: false, error: "Missing or empty fields" });
-    }
+router.post(
+    "/create",
+    tryCatch(async (req, res) => {
+        if (!checkBody(req.body, ["url"])) {
+            return res
+                .status(400)
+                .json({ result: false, error: "Missing or empty fields" });
+        }
 
-    try {
         const { feedUrls = [] } = await rssFinder(req.body.url);
 
         if (feedUrls.length) {
@@ -48,10 +49,7 @@ router.post("/create", async (req, res) => {
             result: false,
             error: "Aucun feed détecté pour cette URL",
         });
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ result: false, error: err.message });
-    }
-});
+    })
+);
 
 module.exports = router;
