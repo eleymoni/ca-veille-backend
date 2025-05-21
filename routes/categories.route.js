@@ -1,13 +1,18 @@
 var express = require("express");
 const {
-    getCategories,
-    getCategoriesById,
+    getCategoriesByUserId,
+    deleteCategoryById,
+    createCategory,
+    updateColorCategory,
+    updateNameCategory,
 } = require("../controllers/categories.controller");
 
 var router = express.Router();
 
-// router.get("/current", getCategories);
-
-// router.get("/:id", getCategoriesById);
+router.get("/:userId", getCategoriesByUserId);
+router.delete("/:categoryId", deleteCategoryById);
+router.post("/newCategory", createCategory);
+router.put("/color", updateColorCategory);
+router.put("/name", updateNameCategory);
 
 module.exports = router;
