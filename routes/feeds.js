@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { checkBody } = require("../modules/checkBody");
 const rssFinder = require("rss-finder");
+const { tryCatch } = require("../utils/tryCatch");
 
 /* create new feed */
 router.post(
