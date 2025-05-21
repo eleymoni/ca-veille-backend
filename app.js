@@ -12,6 +12,7 @@ const authRouter = require("./routes/auth.route");
 const logoutRouter = require("./routes/logout.route");
 const feedsRouter = require("./routes/feeds");
 const categoriesRouter = require("./routes/categories.route");
+const articlesRouter = require("./routes/articles.route");
 const { errorHandler } = require("./middlewares/errorHandler");
 const authMiddleware = require("./middlewares/auth.middleware");
 
@@ -32,6 +33,7 @@ app.use(authMiddleware);
 app.use("/logout", logoutRouter);
 app.use("/feeds", feedsRouter);
 app.use("/categories", categoriesRouter);
+app.use("/articles", articlesRouter);
 app.use(errorHandler);
 
 module.exports = app;
