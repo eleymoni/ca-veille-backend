@@ -6,8 +6,8 @@ const {
 
 var router = express.Router();
 
-router.get("/current", getCategories);
+// router.get("/current", getCategories);
 
-router.get("/:id", getCategoriesById);
+// router.get("/:id", getCategoriesById);
 
 module.exports = router;
