@@ -9,19 +9,23 @@ exports.getCategoriesByUserId = tryCatch(async (req, res) => {
         return res.status(401).json({ result: false, error: "Not authorized" });
     }
 
-    const user = await Category.find({ ownerId: userId });
-    if (!user) {
-        return res.status(401).json({ result: false, error: "Not authorized" });
+    const userCategories = await Category.find({ ownerId: userId });
+    if (!userCategories || userCategories.length === 0) {
+        return res
+            .status(401)
+            .json({ result: false, error: "No categories found" });
     }
+
     const categories = await Category.find({ ownerId: userId }).populate(
         "feeds"
     );
+
     return res.status(200).json({ result: true, categories });
 });
 
 exports.deleteCategoryById = tryCatch(async (req, res) => {
     const user = req.id;
-    const categoryId = req.params.categoryId;
+    const categoryId = req.params.categoryId.trim();
 
     const findCategory = await Category.findById(categoryId);
     if (!findCategory) {
@@ -59,13 +63,14 @@ exports.createCategory = tryCatch(async (req, res) => {
     }
 
     const newCategory = await Category.create({
-        name,
-        color,
+        name: name.trim(),
+        color: color.trim(),
         ownerId: user,
     });
     return res.status(200).json({ result: true, category: newCategory });
 });
 
+// updata color of the category if name is different
 exports.updateColorCategory = tryCatch(async (req, res) => {
     if (!checkBody(req.body, ["categoryId", "color"])) {
         return res
@@ -83,17 +88,18 @@ exports.updateColorCategory = tryCatch(async (req, res) => {
     if (findCategory.ownerId.toString() !== user) {
         return res.status(401).json({ result: false, error: "Not authorized" });
     }
-    if (findCategory.color.toString() === color) {
+    if (findCategory.color.toString() === color.trim()) {
         return res
             .status(401)
             .json({ result: false, error: "Color already in use" });
     }
     const updatedCategory = await Category.findByIdAndUpdate(categoryId, {
-        color: color,
+        color: color.trim(),
     });
     return res.status(200).json({ result: true });
 });
 
+// update the  category name only if the owner dosn't have a category with the same name
 exports.updateNameCategory = tryCatch(async (req, res) => {
     if (!checkBody(req.body, ["categoryId", "name"])) {
         return res
@@ -112,7 +118,7 @@ exports.updateNameCategory = tryCatch(async (req, res) => {
         return res.status(401).json({ result: false, error: "Not authorized" });
     }
     const categoryExists = await Category.findOne({
-        name: { $regex: new RegExp(name, "i") },
+        name: { $regex: new RegExp(name.trim(), "i") },
         ownerId: user,
     });
     if (categoryExists) {
@@ -121,7 +127,7 @@ exports.updateNameCategory = tryCatch(async (req, res) => {
             .json({ result: false, error: "Category already exists" });
     }
     const updatedCategory = await Category.findByIdAndUpdate(categoryId, {
-        name: name,
+        name: name.trim(),
     });
     return res.status(200).json({ result: true });
 });
