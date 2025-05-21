@@ -79,5 +79,13 @@ exports.login = tryCatch(async (req, res) => {
         { new: true } // Retourne l'utilisateur mis à jour
     );
 
-    return res.status(200).json({ result: true, user: updatedUser });
+    // Déstructuration de l'utilisateur pour tout récupérer sauf l'email, le mdp et l'id
+    const {
+        email: _,
+        password: __,
+        _id: ___,
+        ...safeUser
+    } = updatedUser.toObject();
+
+    return res.status(200).json({ result: true, user: safeUser });
 });
