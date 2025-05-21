@@ -10,6 +10,7 @@ var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 const authRouter = require("./routes/auth");
 const feedsRouter = require("./routes/feeds");
+const categoriesRouter = require("./routes/categories.route");
 const { errorHandler } = require("./middlewares/errorHandler");
 
 var app = express();
@@ -25,6 +26,7 @@ app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/auth", authRouter);
 app.use("/feeds", feedsRouter);
+app.use("/categories", categoriesRouter);
 app.use(errorHandler);
 
 module.exports = app;
