@@ -1,4 +1,4 @@
-const Category = require("../models/categories.model");
+const CategoryModel = require("../models/categories.model");
 const { checkBody } = require("../modules/checkBody");
 const { tryCatch } = require("../utils/tryCatch");
 
@@ -9,14 +9,14 @@ exports.getCategoriesByUserId = tryCatch(async (req, res) => {
         return res.status(401).json({ result: false, error: "Not authorized" });
     }
 
-    const userCategories = await Category.find({ ownerId: userId });
+    const userCategories = await CategoryModel.find({ ownerId: userId });
     if (!userCategories || userCategories.length === 0) {
         return res
             .status(401)
             .json({ result: false, error: "No categories found" });
     }
 
-    const categories = await Category.find({ ownerId: userId }).populate(
+    const categories = await CategoryModel.find({ ownerId: userId }).populate(
         "feeds"
     );
 
@@ -27,7 +27,7 @@ exports.deleteCategoryById = tryCatch(async (req, res) => {
     const user = req.id;
     const categoryId = req.params.categoryId.trim();
 
-    const findCategory = await Category.findById(categoryId);
+    const findCategory = await CategoryModel.findById(categoryId);
     if (!findCategory) {
         return res
             .status(404)
@@ -38,7 +38,7 @@ exports.deleteCategoryById = tryCatch(async (req, res) => {
         return res.status(401).json({ result: false, error: "Not authorized" });
     }
 
-    await Category.deleteOne({ _id: categoryId });
+    await CategoryModel.deleteOne({ _id: categoryId });
 
     return res.status(200).json({ result: true });
 });
@@ -52,7 +52,7 @@ exports.createCategory = tryCatch(async (req, res) => {
     }
     const user = req.id;
     const { name, color } = req.body;
-    const categoryExists = await Category.findOne({
+    const categoryExists = await CategoryModel.findOne({
         name: { $regex: new RegExp(name, "i") },
         ownerId: user,
     });
@@ -62,7 +62,7 @@ exports.createCategory = tryCatch(async (req, res) => {
             .json({ result: false, error: "Category already exists" });
     }
 
-    const newCategory = await Category.create({
+    const newCategory = await CategoryModel.create({
         name: name.trim(),
         color: color.trim(),
         ownerId: user,
@@ -79,7 +79,7 @@ exports.updateColorCategory = tryCatch(async (req, res) => {
     }
     const user = req.id;
     const { color, categoryId } = req.body;
-    const findCategory = await Category.findById(categoryId);
+    const findCategory = await CategoryModel.findById(categoryId);
     if (!findCategory) {
         return res
             .status(404)
@@ -93,7 +93,7 @@ exports.updateColorCategory = tryCatch(async (req, res) => {
             .status(401)
             .json({ result: false, error: "Color already in use" });
     }
-    const updatedCategory = await Category.findByIdAndUpdate(categoryId, {
+    const updatedCategory = await CategoryModel.findByIdAndUpdate(categoryId, {
         color: color.trim(),
     });
     return res.status(200).json({ result: true });
@@ -108,7 +108,7 @@ exports.updateNameCategory = tryCatch(async (req, res) => {
     }
     const user = req.id;
     const { name, categoryId } = req.body;
-    const findCategory = await Category.findById(categoryId);
+    const findCategory = await CategoryModel.findById(categoryId);
     if (!findCategory) {
         return res
             .status(404)
@@ -117,7 +117,7 @@ exports.updateNameCategory = tryCatch(async (req, res) => {
     if (findCategory.ownerId.toString() !== user) {
         return res.status(401).json({ result: false, error: "Not authorized" });
     }
-    const categoryExists = await Category.findOne({
+    const categoryExists = await CategoryModel.findOne({
         name: { $regex: new RegExp(name.trim(), "i") },
         ownerId: user,
     });
@@ -126,7 +126,7 @@ exports.updateNameCategory = tryCatch(async (req, res) => {
             .status(409)
             .json({ result: false, error: "Category already exists" });
     }
-    const updatedCategory = await Category.findByIdAndUpdate(categoryId, {
+    const updatedCategory = await CategoryModel.findByIdAndUpdate(categoryId, {
         name: name.trim(),
     });
     return res.status(200).json({ result: true });

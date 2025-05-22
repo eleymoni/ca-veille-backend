@@ -7,5 +7,5 @@ const feedsSchema = mongoose.Schema({
     defaultMedia: { type: String, default: null },
 });
 
-const FeedsModel = mongoose.model("feeds", feedsSchema);
-module.exports = FeedsModel;
+const FeedModel = mongoose.model("feeds", feedsSchema);
+module.exports = FeedModel;

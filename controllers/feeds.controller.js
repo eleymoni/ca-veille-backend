@@ -5,6 +5,8 @@ const { tryCatch } = require("../utils/tryCatch");
 const { checkBody } = require("../modules/checkBody");
 const rssFinder = require("rss-finder");
 const https = require("https");
+const ArticleModel = require("../models/articles.model");
+const FeedModel = require("../models/feeds");
 
 /* Agent https (timeout + keep-alive) */
 const makeAgent = (insecure = false) =>
@@ -105,27 +107,45 @@ exports.createFeed = tryCatch(async (req, res) => {
 
                 // Étape 3 : Extraire les articles
                 const items = result.feed.entry;
+                const logo = result.feed.logo;
+                const feedId = result.feed.id;
 
-                // Étape 4 : Formater les données et nettoyer le HTML des descriptions
-                const articles = items.map((item, index) => ({
-                    // id: index + 1,
-                    url: item.link.$.href,
-                    title: item.title,
-                    description: htmlToText(item.content._, {
-                        wordwrap: false, // Désactiver le retour à la ligne automatique
-                        ignoreHref: true, // Ignorer les liens pour éviter d'inclure les URLs
-                        ignoreImage: true, // Ignorer les images
-                    }),
-                    media: item["media:content"].$.url,
-                    date: item.updated,
-                    author: item.author.name,
-                }));
+                const articleArray = await Promise.all(
+                    items.map(async (item) => {
+                        const newArticle = new ArticleModel({
+                            url: item.link.$.href,
+                            title: item.title,
+                            description: htmlToText(item.content._, {
+                                wordwrap: false,
+                                ignoreHref: true,
+                                ignoreImage: true,
+                            }),
+                            media: item["media:content"]?.$.url || null,
+                            date: item.updated,
+                            author: item.author?.name || "Inconnu",
+                            defaultMedia: logo,
+                        });
+                        const savedArticle = await newArticle.save();
+                        return savedArticle._id;
+                    })
+                );
+
+                const sendUrl = new URL(url);
+                const domainName = sendUrl.hostname.replace(/^www\./, ""); // "lesnumeriques.com"
+
+                const feed = new FeedModel({
+                    url: feedId,
+                    name: domainName,
+                    articles: articleArray,
+                    defaultMedia: logo,
+                });
+
+                const newFeed = await feed.save();
 
                 // Étape 5 : Envoyer la réponse JSON
-                return res.status(200).json({
-                    success: true,
-                    data: articles,
-                });
+                return res
+                    .status(200)
+                    .json({ success: true, feedId: newFeed._id });
             } catch (error) {
                 // Étape 6 : Gestion des erreurs
                 console.error("Erreur lors du scraping :", error.message);
