@@ -28,12 +28,13 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/", indexRouter);
 app.use("/auth", authRouter);
 app.use("/users", usersRouter);
-app.use("/feeds", feedsRouter);
 app.use(authMiddleware);
 
+app.use("/feeds", feedsRouter);
+app.use("/articles", articlesRouter);
 app.use("/logout", logoutRouter);
 app.use("/categories", categoriesRouter);
-app.use("/articles", articlesRouter);
+
 app.use(errorHandler);
 
 module.exports = app;
