@@ -7,10 +7,10 @@ var logger = require("morgan");
 const cors = require("cors");
 
 var indexRouter = require("./routes/index");
-var usersRouter = require("./routes/users");
+var usersRouter = require("./routes/feeds.route");
 const authRouter = require("./routes/auth.route");
 const logoutRouter = require("./routes/logout.route");
-const feedsRouter = require("./routes/feeds");
+const feedsRouter = require("./routes/feeds.route");
 const categoriesRouter = require("./routes/categories.route");
 const articlesRouter = require("./routes/articles.route");
 const { errorHandler } = require("./middlewares/errorHandler");
@@ -28,10 +28,10 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/", indexRouter);
 app.use("/auth", authRouter);
 app.use("/users", usersRouter);
+app.use("/feeds", feedsRouter);
 app.use(authMiddleware);
 
 app.use("/logout", logoutRouter);
-app.use("/feeds", feedsRouter);
 app.use("/categories", categoriesRouter);
 app.use("/articles", articlesRouter);
 app.use(errorHandler);
