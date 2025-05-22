@@ -1,12 +1,10 @@
 var express = require("express");
-const { addFavoriteArticle, getArticleById, removeFavoriteArticle } = require("../controllers/articles.controller");
+const { toggleFavoriteArticle, getArticleById } = require("../controllers/articles.controller");
 
 var router = express.Router();
 
-router.post("/favorites/:articleId", addFavoriteArticle);
+router.put("/favorites/:articleId", toggleFavoriteArticle);
 
-router.get("/:id", getArticleById);
-
-router.delete("/favorites/:articleId", removeFavoriteArticle);
+router.get("/:articleId", getArticleById);
 
 module.exports = router;
