@@ -1,26 +1,89 @@
 const CategoryModel = require("../models/categories.model");
+const FeedModel = require("../models/feeds");
+const UserModel = require("../models/users.model");
 const { checkBody } = require("../modules/checkBody");
 const { tryCatch } = require("../utils/tryCatch");
 
-// get categories of an user with awith id in param
-exports.getCategoriesByUserId = tryCatch(async (req, res) => {
-    const userId = req.params.userId;
-    if (!userId) {
-        return res.status(401).json({ result: false, error: "Not authorized" });
-    }
-
-    const userCategories = await CategoryModel.find({ ownerId: userId });
-    if (!userCategories || userCategories.length === 0) {
+// get articles of cartegories by id, feeds merged sort by date
+// exemple fetch : const ids = [1, 2, 3]; fetch(`/api/users?ids=${ids.join(',')}`);
+exports.getCategoriesById = tryCatch(async (req, res) => {
+    if (!req.query.ids) {
         return res
-            .status(401)
-            .json({ result: false, error: "No categories found" });
+            .status(400)
+            .json({ result: false, error: "Missing categories ids" });
     }
-
-    const categories = await CategoryModel.find({ ownerId: userId }).populate(
-        "feeds"
+    const ids = req.query.ids?.split(",");
+    // method to find in a array of ids, and to populate on multiple leveles
+    const categories = await CategoryModel.find({ _id: { $in: ids } }).populate(
+        {
+            path: "feeds",
+            populate: { path: "articles" },
+        }
     );
+    if (!categories || categories.length === 0) {
+        return res
+            .status(404)
+            .json({ result: false, error: "Categories not found" });
+    }
+    const categoriesList = categories.map((category) => {
+        const articles = [];
+        category.feeds.map((feed) => {
+            feed.articles.map((article) => {
+                articles.push(article);
+            });
+        });
+        articles.sort((a, b) => {
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            return dateB - dateA;
+        });
+        return {
+            _id: category._id,
+            name: category.name,
+            color: category.color,
+            articles,
+        };
+    });
+    res.json({ result: true, categoriesList });
+});
 
-    return res.status(200).json({ result: true, categories });
+// get articles  of an array of user with id in query, feeds merged sort by date
+exports.getCategoriesByUserId = tryCatch(async (req, res) => {
+    if (!req.query.ids) {
+        return res
+            .status(400)
+            .json({ result: false, error: "Missing categories ids" });
+    }
+    const ids = req.query.ids?.split(",");
+    const users = await UserModel.find({ _id: { $in: ids } }).populate({
+        path: "categories",
+        populate: { path: "feeds", populate: { path: "articles" } },
+    });
+    if (!users || users.length === 0) {
+        return res
+            .status(404)
+            .json({ result: false, error: "Users not found" });
+    }
+    const userCategoriesList = users.map((user) => {
+        let userObject = {
+            username: user.username,
+            articles: [],
+        };
+        user.categories.map((category) => {
+            const articles = [];
+            category.feeds.map((feed) => {
+                feed.articles.map((article) => articles.push(article));
+            });
+            userObject.articles = [...userObject.articles, ...articles];
+        });
+        userObject.articles.sort((a, b) => {
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            return dateB - dateA;
+        });
+        return userObject;
+    });
+    res.json({ result: true, users: userCategoriesList });
 });
 
 exports.deleteCategoryById = tryCatch(async (req, res) => {
