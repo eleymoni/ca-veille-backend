@@ -21,55 +21,28 @@ exports.toggleFavoriteArticle = tryCatch(async (req, res) => {
 
     const user = await UserModel.findById(userId);
 
-<<<<<<< HEAD
     const isFavorite = user.favoriteArticles.includes(articleId);
 
     if (isFavorite) {
-        await UserModel.findByIdAndUpdate(
-            userId,
-            {$pull: { favoriteArticles: articleId }}
-        );
-        return res.status(200).json({result: true, message: "Article removed from favorites"})
+        await UserModel.findByIdAndUpdate(userId, {
+            $pull: { favoriteArticles: articleId },
+        });
+        return res
+            .status(200)
+            .json({ result: true, message: "Article removed from favorites" });
     } else {
         await UserModel.findByIdAndUpdate(
             userId,
-            {$push: { favoriteArticles: articleId}} //double verif, addToSet au lieu de push : nécessaire ?
+            { $push: { favoriteArticles: articleId } } //double verif, addToSet au lieu de push : nécessaire ?
         );
-        return res.status(200).json({result: true, message: "Article added to favorites"})
+        return res
+            .status(200)
+            .json({ result: true, message: "Article added to favorites" });
     }
 });
 
 exports.getArticleById = tryCatch(async (req, res) => {
     const { articleId } = req.params;
-
-    if(!articleId) {
-        return res.status(400).json({result: false, error: "Missing articleId parameter"});
-    }
-
-    const article = await Article.findById(articleId);
-    if (!article) {
-        return res.status(404).json({result: false, error : "Article not found" });
-    }
-    
-    res.status(200).json({result: true, article})
-});
-=======
-    if (!user.favoritesArticles.includes(articleId)) {
-        user.favoritesArticles.push(articleId);
-        await user.save();
-        return res
-            .status(200)
-            .json({ result: true, message: "Article added to favorites" });
-    } else {
-        return res
-            .status(409)
-            .json({ result: true, message: "Article already in favorites" });
-    }
-});
-
-exports.removeFavoriteArticle = tryCatch(async (req, res) => {
-    const userId = req.id;
-    const articleId = req.params.articleId;
 
     if (!articleId) {
         return res
@@ -77,33 +50,12 @@ exports.removeFavoriteArticle = tryCatch(async (req, res) => {
             .json({ result: false, error: "Missing articleId parameter" });
     }
 
-    const user = await UserModel.findById(userId);
-
-    const initialLength = user.favoritesArticles.length;
-
-    user.favoritesArticles = user.favoritesArticles.filter(
-        //je filter sur le tableau d'Id
-        (id) => id.toString() !== articleId
-    ); //toString obligé sinon je compare une string avec un objectId mongoDb = aie!
-    await user.save();
-
-    if (user.favoritesArticles.length === initialLength) {
-        return res
-            .status(404)
-            .json({ result: false, message: "Article not found in favorites" });
-    }
-    res.status(200).json({
-        result: true,
-        message: "Article removed from favorites",
-    });
-});
-
-exports.getArticleById = tryCatch(async (req, res) => {
-    const article = await ArticleModel.findById(req.params.id);
-    if (!article)
+    const article = await Article.findById(articleId);
+    if (!article) {
         return res
             .status(404)
             .json({ result: false, error: "Article not found" });
+    }
+
     res.status(200).json({ result: true, article });
 });
->>>>>>> feature-feed
