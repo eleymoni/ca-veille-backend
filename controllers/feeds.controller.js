@@ -47,6 +47,75 @@ exports.createFeed = tryCatch(async (req, res) => {
     });
 
     if (feedUrls.length) {
+        if (feedUrls[0].url) {
+            const foundUrl = feedUrls[0].url;
+            // =========================================================================================
+            try {
+                // Étape 1 : Faire une requête HTTP pour récupérer le flux RSS
+                const response = await axios.get(foundUrl);
+                const xmlData = response.data;
+
+                // Étape 2 : Parser le XML en objet JavaScript
+                const parser = new xml2js.Parser({ explicitArray: false });
+                const result = await parser.parseStringPromise(xmlData);
+
+                // return res.json({ result });
+
+                // Étape 3 : Extraire les articles
+                const items = result.rss.channel.item;
+                const logo = result.rss.channel.image.url;
+                const feedId = result.rss.channel.link;
+
+                const articleArray = await Promise.all(
+                    items.map(async (item) => {
+                        const newArticle = new ArticleModel({
+                            url: item.link,
+                            title: item.title,
+                            description: htmlToText(item.description, {
+                                wordwrap: false,
+                                ignoreHref: true,
+                                ignoreImage: true,
+                            }),
+                            media: item.enclosure.url || null,
+                            date: item.pubDate,
+                            author: item.author || "Inconnu",
+                            defaultMedia: logo,
+                        });
+                        const savedArticle = await newArticle.save();
+                        return savedArticle._id;
+                    })
+                );
+
+                const sendUrl = new URL(url);
+                const domainName = sendUrl.hostname.replace(/^www\./, "");
+
+                const feed = new FeedModel({
+                    url: feedId,
+                    name: domainName,
+                    articles: articleArray,
+                    defaultMedia: logo,
+                });
+
+                const newFeed = await feed.save();
+
+                // Étape 5 : Envoyer la réponse JSON
+                return res
+                    .status(200)
+                    .json({ success: true, feedId: newFeed._id });
+            } catch (error) {
+                // Étape 6 : Gestion des erreurs
+                console.error("Erreur lors du scraping :", error.message);
+                res.status(500).json({
+                    success: false,
+                    message:
+                        "Erreur lors de la récupération ou du traitement des articles",
+                    error: error.message,
+                });
+            }
+            // =========================================================================================
+
+            return res.json({ result: true, decodedXml: response2 });
+        }
         return res.json({ result: true, url: feedUrls[0].url });
     }
 
@@ -57,6 +126,7 @@ exports.createFeed = tryCatch(async (req, res) => {
         "/feed.xml",
         "/rss",
         "/feed",
+        "/feed/rss",
         "/atom.xml",
         "/index.xml",
         "/alerte-rss",
