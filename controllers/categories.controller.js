@@ -14,7 +14,7 @@ async function getUsersArticles(ids) {
     const userList = users.map((user) => {
         let userObject = {
             username: user.username,
-            id: user._id,
+            _id: user._id,
             articles: [],
         };
         user.categories.map((category) => {
@@ -118,7 +118,7 @@ exports.getPopularUsers = tryCatch(async (req, res) => {
         .map((user) => user._id);
     // use common function
     const popularsArticles = await getUsersArticles(ids);
-    res.json({ result: true, populars: popularsArticles });
+    res.json({ result: true, users: popularsArticles });
 });
 
 exports.deleteCategoryById = tryCatch(async (req, res) => {
