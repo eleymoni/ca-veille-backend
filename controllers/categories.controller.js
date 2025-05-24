@@ -116,7 +116,7 @@ exports.createCategory = tryCatch(async (req, res) => {
     const user = req.id;
     const { name, color } = req.body;
     const categoryExists = await CategoryModel.findOne({
-        name: { $regex: new RegExp(name, "i") },
+        name: { $regex: new RegExp(name.trim(), "i") },
         ownerId: user,
     });
     if (categoryExists) {
