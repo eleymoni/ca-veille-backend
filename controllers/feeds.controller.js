@@ -7,6 +7,7 @@ const rssFinder = require("rss-finder");
 const https = require("https");
 const ArticleModel = require("../models/articles.model");
 const FeedModel = require("../models/feeds");
+const CategoryModel = require("../models/categories.model");
 
 /* Agent https (timeout + keep-alive) */
 const makeAgent = (insecure = false) =>
@@ -16,15 +17,95 @@ const makeAgent = (insecure = false) =>
         rejectUnauthorized: !insecure,
     });
 
+const addFeedToBdd = async (siteUrl, categoryId, res) => {
+    let feedCreated = await FeedModel.findOne({ url: siteUrl });
+
+    if (!feedCreated) {
+        // Étape 1 : Faire une requête HTTP pour récupérer le flux RSS
+        const response = await axios.get(siteUrl);
+        const xmlData = response.data;
+
+        // Étape 2 : Parser le XML en objet JavaScript
+        const parser = new xml2js.Parser({ explicitArray: false });
+        const result = await parser.parseStringPromise(xmlData);
+
+        // Étape 3 : Extraire les articles
+        const items = result?.feed?.entry || result?.rss?.channel?.item;
+        const logo = result?.feed?.logo || result?.rss?.channel?.image?.url;
+
+        const articleArray = await Promise.all(
+            items.map(async (item) => {
+                const newArticle = new ArticleModel({
+                    url: item?.link?.$?.href || item?.link,
+                    title: item.title,
+                    description: htmlToText(
+                        item?.content?._ || item?.description,
+                        {
+                            wordwrap: false,
+                            ignoreHref: true,
+                            ignoreImage: true,
+                        }
+                    ),
+                    media:
+                        item["media:content"]?.$?.url ||
+                        item?.enclosure?.url ||
+                        null,
+                    date: item.updated || item.pubDate,
+                    author: item.author?.name || item.author || "Inconnu",
+                    defaultMedia: logo,
+                });
+                const savedArticle = await newArticle.save();
+                return savedArticle._id;
+            })
+        );
+
+        const domainName = new URL(siteUrl).hostname.replace(/^www\./, "");
+
+        const feed = new FeedModel({
+            url: siteUrl,
+            name: domainName,
+            articles: articleArray,
+            defaultMedia: logo,
+        });
+
+        feedCreated = await feed.save();
+    }
+
+    await CategoryModel.findByIdAndUpdate(categoryId, {
+        $addToSet: { feeds: feedCreated._id },
+    });
+
+    return res.status(200).json({
+        success: true,
+        feedId: feedCreated._id,
+        feedName: feedCreated.name,
+    });
+};
+
 exports.createFeed = tryCatch(async (req, res) => {
-    if (!checkBody(req.body, ["url"])) {
+    if (!checkBody(req.body, ["url", "categoryId"])) {
         return res
             .status(400)
             .json({ result: false, error: "Missing or empty fields" });
     }
 
-    const { url } = req.body;
+    const { url, categoryId } = req.body;
     const query = url.trim();
+    const urlRegex =
+        /^(https?:\/\/)(?:[\p{L}\d-]+\.)+[\p{L}]{2,63}(?::\d{2,5})?(?:\/[^\s?#]*)?(?:\?[^\s#]*)?(?:#[^\s]*)?$/u;
+
+    if (!urlRegex.test(query)) {
+        return res.status(400).json({
+            result: false,
+            error: "l'url entrer n'est pas valide",
+        });
+    }
+
+    if (!(await CategoryModel.findById(categoryId))) {
+        return res
+            .status(400)
+            .json({ result: false, error: "categoryId invalide" });
+    }
 
     /* ----- Détection automatique avec rss-finder ----- */
     const { feedUrls = [] } = await rssFinder(query, {
@@ -46,80 +127,9 @@ exports.createFeed = tryCatch(async (req, res) => {
         throw err;
     });
 
-    if (feedUrls.length) {
-        if (feedUrls[0].url) {
-            const foundUrl = feedUrls[0].url;
-            // =========================================================================================
-            try {
-                // Étape 1 : Faire une requête HTTP pour récupérer le flux RSS
-                const response = await axios.get(foundUrl);
-                const xmlData = response.data;
+    if (feedUrls.length && feedUrls[0].url)
+        return addFeedToBdd(feedUrls[0].url, categoryId, res);
 
-                // Étape 2 : Parser le XML en objet JavaScript
-                const parser = new xml2js.Parser({ explicitArray: false });
-                const result = await parser.parseStringPromise(xmlData);
-
-                // return res.json({ result });
-
-                // Étape 3 : Extraire les articles
-                const items = result.rss.channel.item;
-                const logo = result.rss.channel.image.url;
-                const feedId = result.rss.channel.link;
-
-                const articleArray = await Promise.all(
-                    items.map(async (item) => {
-                        const newArticle = new ArticleModel({
-                            url: item.link,
-                            title: item.title,
-                            description: htmlToText(item.description, {
-                                wordwrap: false,
-                                ignoreHref: true,
-                                ignoreImage: true,
-                            }),
-                            media: item.enclosure.url || null,
-                            date: item.pubDate,
-                            author: item.author || "Inconnu",
-                            defaultMedia: logo,
-                        });
-                        const savedArticle = await newArticle.save();
-                        return savedArticle._id;
-                    })
-                );
-
-                const sendUrl = new URL(url);
-                const domainName = sendUrl.hostname.replace(/^www\./, "");
-
-                const feed = new FeedModel({
-                    url: feedId,
-                    name: domainName,
-                    articles: articleArray,
-                    defaultMedia: logo,
-                });
-
-                const newFeed = await feed.save();
-
-                // Étape 5 : Envoyer la réponse JSON
-                return res
-                    .status(200)
-                    .json({ success: true, feedId: newFeed._id });
-            } catch (error) {
-                // Étape 6 : Gestion des erreurs
-                console.error("Erreur lors du scraping :", error.message);
-                res.status(500).json({
-                    success: false,
-                    message:
-                        "Erreur lors de la récupération ou du traitement des articles",
-                    error: error.message,
-                });
-            }
-            // =========================================================================================
-
-            return res.json({ result: true, decodedXml: response2 });
-        }
-        return res.json({ result: true, url: feedUrls[0].url });
-    }
-
-    /* ----- Test des différents lien pour trouver le flux rss ----- */
     const homepage = new URL(query).origin;
     const guesses = [
         "/rss.xml",
@@ -166,67 +176,11 @@ exports.createFeed = tryCatch(async (req, res) => {
         }
 
         if (ok) {
-            try {
-                // Étape 1 : Faire une requête HTTP pour récupérer le flux RSS
-                const response = await axios.get(candidate);
-                const xmlData = response.data;
-
-                // Étape 2 : Parser le XML en objet JavaScript
-                const parser = new xml2js.Parser({ explicitArray: false });
-                const result = await parser.parseStringPromise(xmlData);
-
-                // Étape 3 : Extraire les articles
-                const items = result.feed.entry;
-                const logo = result.feed.logo;
-                const feedId = result.feed.id;
-
-                const articleArray = await Promise.all(
-                    items.map(async (item) => {
-                        const newArticle = new ArticleModel({
-                            url: item.link.$.href,
-                            title: item.title,
-                            description: htmlToText(item.content._, {
-                                wordwrap: false,
-                                ignoreHref: true,
-                                ignoreImage: true,
-                            }),
-                            media: item["media:content"]?.$.url || null,
-                            date: item.updated,
-                            author: item.author?.name || "Inconnu",
-                            defaultMedia: logo,
-                        });
-                        const savedArticle = await newArticle.save();
-                        return savedArticle._id;
-                    })
-                );
-
-                const sendUrl = new URL(url);
-                const domainName = sendUrl.hostname.replace(/^www\./, ""); // "lesnumeriques.com"
-
-                const feed = new FeedModel({
-                    url: feedId,
-                    name: domainName,
-                    articles: articleArray,
-                    defaultMedia: logo,
-                });
-
-                const newFeed = await feed.save();
-
-                // Étape 5 : Envoyer la réponse JSON
-                return res
-                    .status(200)
-                    .json({ success: true, feedId: newFeed._id });
-            } catch (error) {
-                // Étape 6 : Gestion des erreurs
-                console.error("Erreur lors du scraping :", error.message);
-                res.status(500).json({
-                    success: false,
-                    message:
-                        "Erreur lors de la récupération ou du traitement des articles",
-                    error: error.message,
-                });
-            }
-            return res.json({ result: true, url: candidate });
+            return addFeedToBdd(candidate, categoryId, res);
         }
     }
+    return res.status(400).json({
+        result: false,
+        error: "Aucun feed n'as était trouvé pour cette URL",
+    });
 });
