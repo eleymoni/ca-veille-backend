@@ -4,6 +4,37 @@ const UserModel = require("../models/users.model");
 const { checkBody } = require("../modules/checkBody");
 const { tryCatch } = require("../utils/tryCatch");
 
+// COMMON FUNCTIONS
+// return user name, id and articles of all user's categories sort by date
+async function getUsersArticles(ids) {
+    const users = await UserModel.find({ _id: { $in: ids } }).populate({
+        path: "categories",
+        populate: { path: "feeds", populate: { path: "articles" } },
+    });
+    const userList = users.map((user) => {
+        let userObject = {
+            username: user.username,
+            id: user._id,
+            articles: [],
+        };
+        user.categories.map((category) => {
+            const articles = [];
+            category.feeds.map((feed) => {
+                feed.articles.map((article) => articles.push(article));
+            });
+            userObject.articles = [...userObject.articles, ...articles];
+        });
+        userObject.articles.sort((a, b) => {
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            return dateB - dateA;
+        });
+        return userObject;
+    });
+    return userList;
+}
+
+// EXPORTS
 // get articles of cartegories by id, feeds merged sort by date
 // exemple fetch : const ids = [1, 2, 3]; fetch(`/api/users?ids=${ids.join(',')}`);
 exports.getCategoriesById = tryCatch(async (req, res) => {
@@ -55,35 +86,39 @@ exports.getCategoriesByUserId = tryCatch(async (req, res) => {
             .json({ result: false, error: "Missing categories ids" });
     }
     const ids = req.query.ids?.split(",");
-    const users = await UserModel.find({ _id: { $in: ids } }).populate({
-        path: "categories",
-        populate: { path: "feeds", populate: { path: "articles" } },
-    });
-    if (!users || users.length === 0) {
+    // use common function
+    const userCategoriesList = await getUsersArticles(ids);
+    if (!userCategoriesList || userCategoriesList.length === 0) {
         return res
             .status(404)
             .json({ result: false, error: "Users not found" });
     }
-    const userCategoriesList = users.map((user) => {
-        let userObject = {
-            username: user.username,
-            articles: [],
-        };
-        user.categories.map((category) => {
-            const articles = [];
-            category.feeds.map((feed) => {
-                feed.articles.map((article) => articles.push(article));
-            });
-            userObject.articles = [...userObject.articles, ...articles];
-        });
-        userObject.articles.sort((a, b) => {
-            const dateA = new Date(a.date);
-            const dateB = new Date(b.date);
-            return dateB - dateA;
-        });
-        return userObject;
-    });
     res.json({ result: true, users: userCategoriesList });
+});
+
+exports.getPopularUsers = tryCatch(async (req, res) => {
+    const users = await UserModel.find({
+        isPublic: true,
+        followers: { $gt: 0 },
+        //limit to 100 users
+    }).limit(100);
+
+    if (!users || users.length === 0) {
+        return res
+            .status(404)
+            .json({ result: false, error: "No popular users found" });
+    }
+    // get only ids sort by followers
+    const ids = users
+        .sort((a, b) => {
+            const dateA = new Date(a.followers);
+            const dateB = new Date(b.followers);
+            return dateB - dateA;
+        })
+        .map((user) => user._id);
+    // use common function
+    const popularsArticles = await getUsersArticles(ids);
+    res.json({ result: true, populars: popularsArticles });
 });
 
 exports.deleteCategoryById = tryCatch(async (req, res) => {
