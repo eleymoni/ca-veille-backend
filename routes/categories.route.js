@@ -7,9 +7,11 @@ const {
     updateColorCategory,
     updateNameCategory,
     getPopularUsers,
+    getUserArticles,
 } = require("../controllers/categories.controller");
 
 var router = express.Router();
+router.get("/home", getUserArticles);
 // require query ids example : const ids = [1, 2, 3]; fetch(`/api/users?ids=${ids.join(',')}`);
 router.get("/categoriesId", getCategoriesById);
 // require query ids example : const ids = [1, 2, 3]; fetch(`/api/users?ids=${ids.join(',')}`);

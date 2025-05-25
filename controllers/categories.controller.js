@@ -34,28 +34,13 @@ async function getUsersArticles(ids) {
     return userList;
 }
 
-// EXPORTS
-// get articles of cartegories by id, feeds merged sort by date
-// exemple fetch : const ids = [1, 2, 3]; fetch(`/api/users?ids=${ids.join(',')}`);
-exports.getCategoriesById = tryCatch(async (req, res) => {
-    if (!req.query.ids) {
-        return res
-            .status(400)
-            .json({ result: false, error: "Missing categories ids" });
-    }
-    const ids = req.query.ids?.split(",");
-    // method to find in a array of ids, and to populate on multiple leveles
+async function getGategoriesArticles(ids) {
     const categories = await CategoryModel.find({ _id: { $in: ids } }).populate(
         {
             path: "feeds",
             populate: { path: "articles" },
         }
     );
-    if (!categories || categories.length === 0) {
-        return res
-            .status(404)
-            .json({ result: false, error: "Categories not found" });
-    }
     const categoriesList = categories.map((category) => {
         const articles = [];
         category.feeds.map((feed) => {
@@ -75,6 +60,65 @@ exports.getCategoriesById = tryCatch(async (req, res) => {
             articles,
         };
     });
+    return categoriesList;
+}
+
+// EXPORTS
+exports.getUserArticles = tryCatch(async (req, res) => {
+    const user = req.id;
+    if (!req.query.ids) {
+        return res
+            .status(400)
+            .json({ result: false, error: "Missing categories ids" });
+    }
+    const ids = req.query.ids?.split(",");
+
+    const categoriesList = await getGategoriesArticles(ids);
+    if (!categoriesList || categoriesList.length === 0) {
+        return res
+            .status(404)
+            .json({ result: false, error: "Categories not found" });
+    }
+    const userCategoriesList = await getUsersArticles(user);
+    if (!userCategoriesList || userCategoriesList.length === 0) {
+        return res.status(404).json({ result: false, error: "User not found" });
+    }
+    const mergedArticles = [...categoriesList, ...userCategoriesList];
+
+    const uniqueArticles = [];
+    // set permet de stocker des valeurs uniques
+    const seen = new Set();
+    for (const article of mergedArticles) {
+        const id = article._id.toString();
+        if (!seen.has(id)) {
+            seen.add(id);
+            uniqueArticles.push(article);
+        }
+    }
+    uniqueArticles.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateB - dateA;
+    });
+
+    res.json({ result: true, articles: uniqueArticles });
+});
+
+// get articles of cartegories by id, feeds merged sort by date
+exports.getCategoriesById = tryCatch(async (req, res) => {
+    if (!req.query.ids) {
+        return res
+            .status(400)
+            .json({ result: false, error: "Missing categories ids" });
+    }
+    const ids = req.query.ids?.split(",");
+    // method to find in a array of ids, and to populate on multiple leveles
+    const categoriesList = await getGategoriesArticles(ids);
+    if (!categoriesList || categoriesList.length === 0) {
+        return res
+            .status(404)
+            .json({ result: false, error: "Categories not found" });
+    }
     res.json({ result: true, categoriesList });
 });
 
