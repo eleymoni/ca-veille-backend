@@ -50,7 +50,7 @@ exports.getArticleById = tryCatch(async (req, res) => {
             .json({ result: false, error: "Missing articleId parameter" });
     }
 
-    const article = await Article.findById(articleId);
+    const article = await ArticleModel.findById(articleId);
     if (!article) {
         return res
             .status(404)
@@ -58,4 +58,25 @@ exports.getArticleById = tryCatch(async (req, res) => {
     }
 
     res.status(200).json({ result: true, article });
+});
+
+exports.getFavoritesArticlesByIds = tryCatch(async (req, res) => {
+    if (!req.query.ids) {
+        return res
+            .status(400)
+            .json({ result: false, error: "Missing categories ids" });
+    }
+    const ids = req.query.ids?.split(",");
+    const articles = await ArticleModel.find({ _id: { $in: ids } });
+    if (!articles || articles.length === 0) {
+        return res
+            .status(404)
+            .json({ result: false, error: "Articles not found" });
+    }
+    const articlesSort = articles.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateB - dateA;
+    });
+    res.status(200).json({ result: true, articles: articlesSort });
 });
