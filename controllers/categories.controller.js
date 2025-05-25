@@ -19,17 +19,33 @@ exports.getUserArticles = tryCatch(async (req, res) => {
     const ids = req.query.ids?.split(",");
 
     const categoriesList = await getGategoriesArticles(ids);
-    if (!categoriesList || categoriesList.length === 0) {
-        return res
-            .status(404)
-            .json({ result: false, error: "Categories not found" });
-    }
     const userCategoriesList = await getUsersArticles(user);
-    if (!userCategoriesList || userCategoriesList.length === 0) {
-        return res.status(404).json({ result: false, error: "User not found" });
-    }
-    const mergedArticles = [...categoriesList, ...userCategoriesList];
 
+    const mergedCategories = [];
+    categoriesList.map((category) =>
+        category.articles.map((article) => {
+            const newArticle = article.toObject();
+            newArticle.categoryName = category.name;
+            newArticle.categoryColor = category.color;
+            newArticle.categoryId = category._id;
+            newArticle.username = null;
+            newArticle.userId = null;
+            mergedCategories.push(newArticle);
+        })
+    );
+    const mergedUsers = [];
+    userCategoriesList.map((user) =>
+        user.articles.map((article) => {
+            const newArticle = article.toObject();
+            newArticle.categoryName = null;
+            newArticle.categoryColor = null;
+            newArticle.categoryId = null;
+            newArticle.username = user.username;
+            newArticle.userId = user._id;
+            mergedUsers.push(newArticle);
+        })
+    );
+    const mergedArticles = [...mergedCategories, ...mergedUsers];
     const uniqueArticles = [];
     // set permet de stocker des valeurs uniques
     const seen = new Set();
@@ -45,7 +61,11 @@ exports.getUserArticles = tryCatch(async (req, res) => {
         const dateB = new Date(b.date);
         return dateB - dateA;
     });
-
+    if (!uniqueArticles || uniqueArticles.length === 0) {
+        return res
+            .status(404)
+            .json({ result: false, error: "Articles not found" });
+    }
     res.json({ result: true, articles: uniqueArticles });
 });
 
