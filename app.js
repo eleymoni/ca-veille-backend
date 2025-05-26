@@ -12,6 +12,7 @@ const logoutRouter = require("./routes/logout.route");
 const feedsRouter = require("./routes/feeds.route");
 const categoriesRouter = require("./routes/categories.route");
 const articlesRouter = require("./routes/articles.route");
+const userRouter = require("./routes/user.route");
 const { errorHandler } = require("./middlewares/errorHandler");
 const authMiddleware = require("./middlewares/auth.middleware");
 

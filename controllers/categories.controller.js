@@ -1,5 +1,5 @@
 const CategoryModel = require("../models/categories.model");
-const FeedModel = require("../models/feeds");
+const FeedModel = require("../models/feeds.model");
 const UserModel = require("../models/users.model");
 const { checkBody } = require("../modules/checkBody");
 const { tryCatch } = require("../utils/tryCatch");
