@@ -6,12 +6,6 @@ exports.toggleFavoriteArticle = tryCatch(async (req, res) => {
     const userId = req.id; //je récup grâce au middleware
     const articleId = req.params.articleId;
 
-    if (!articleId) {
-        return res
-            .status(400)
-            .json({ result: false, error: "Missing articleId parameter" });
-    }
-
     //je checke si l'article existe
     const article = await ArticleModel.findById(articleId);
     if (!article)
@@ -43,12 +37,6 @@ exports.toggleFavoriteArticle = tryCatch(async (req, res) => {
 
 exports.getArticleById = tryCatch(async (req, res) => {
     const { articleId } = req.params;
-
-    if (!articleId) {
-        return res
-            .status(400)
-            .json({ result: false, error: "Missing articleId parameter" });
-    }
 
     const article = await ArticleModel.findById(articleId);
     if (!article) {
