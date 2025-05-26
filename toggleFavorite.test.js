@@ -10,7 +10,6 @@ jest.mock("./models/users.model", () => ({
     findById: jest.fn().mockResolvedValue({ //simule cherche un user dans la bdd
         _id: "user123",
         favoriteArticles: [],
-        // save: jest.fn(), //inutile ?
     }),
     findByIdAndUpdate: jest.fn().mockResolvedValue({}), //simule l'update d'un user
 }));
@@ -39,7 +38,6 @@ describe("PUT /articles/favorites/:articleId", () => {
         UserModel.findById.mockResolvedValueOnce({
             _id: "user123",
             favoriteArticles: [], //je simule un user sans fav
-            save: jest.fn(),
         });
         ArticleModel.findById.mockResolvedValueOnce({
             _id: "665fc28e5f54ebc7a5401169",
@@ -93,14 +91,6 @@ describe("PUT /articles/favorites/:articleId", () => {
         expect(updateUser.favoriteArticles.map(id => id.toString())) //obligée de mapper pour pour avoir des strings et pas des objectID ??
         .not.toContain(article._id.toString());
     });
-
-    //test d'erreur articleId manquant
-    // it("PUT /articles/favorites/:articleId retourne 400 si articleId manquant", async () => {
-    //     const res = await request(app).put("/articles/favorites").send();
-        
-    //     expect(res.statusCode).toBe(400);
-    //     expect(res.body.error).toMatch("Missing articleId parameter");
-    // });
 
     //test d'erreur article inexistant
     it("Should return 404 if article not found", async () => {
