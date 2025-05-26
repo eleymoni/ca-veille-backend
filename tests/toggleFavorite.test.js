@@ -23,9 +23,9 @@ jest.mock("./models/articles.model", () => ({
 
 const request = require('supertest');
 const mongoose = require('mongoose');
-const app = require('./app');
-const UserModel = require('./models/users.model'); 
-const ArticleModel = require('./models/articles.model');
+const app = require('../app');
+const UserModel = require('../models/users.model'); 
+const ArticleModel = require('../models/articles.model');
 
 const article = { _id: "665fc28e5f54ebc7a5401169" };
 const user = { _id: "user123" };
