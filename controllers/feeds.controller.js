@@ -6,7 +6,7 @@ const { checkBody } = require("../modules/checkBody");
 const rssFinder = require("rss-finder");
 const https = require("https");
 const ArticleModel = require("../models/articles.model");
-const FeedModel = require("../models/feeds");
+const FeedModel = require("../models/feeds.model");
 const CategoryModel = require("../models/categories.model");
 
 /* Agent https (timeout + keep-alive) */
