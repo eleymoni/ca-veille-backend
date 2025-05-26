@@ -47,9 +47,21 @@ exports.register = tryCatch(async (req, res) => {
     // Token generation
     const token = generateAccessToken(createdUser._id);
 
-    await UserModel.updateOne({ _id: createdUser._id }, { token: token });
+    const updatedUser = await UserModel.findOneAndUpdate(
+        { _id: createdUser._id },
+        { token: token },
+        { new: true } // Retourne l'utilisateur mis à jour
+    );
 
-    return res.status(201).json({ result: true, user: newUser, token });
+    // Déstructuration de l'utilisateur pour tout récupérer sauf l'email, le mdp et l'id
+    const {
+        email: _,
+        password: __,
+        _id: ___,
+        ...safeUser
+    } = updatedUser.toObject();
+
+    return res.status(201).json({ result: true, user: safeUser });
 });
 
 exports.login = tryCatch(async (req, res) => {
