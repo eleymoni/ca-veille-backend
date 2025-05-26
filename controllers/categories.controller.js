@@ -174,6 +174,11 @@ exports.createCategory = tryCatch(async (req, res) => {
         color: color.trim(),
         ownerId: user,
     });
+
+    await UserModel.findByIdAndUpdate(user, {
+        $addToSet: { categories: newCategory._id },
+    });
+
     return res.status(200).json({ result: true, category: newCategory });
 });
 
