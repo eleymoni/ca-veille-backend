@@ -54,7 +54,6 @@ describe("PUT /articles/favorites/:articleId", () => {
         UserModel.findById.mockResolvedValueOnce({
             _id: "user123",
             favoriteArticles: ["665fc28e5f54ebc7a5401169"],
-            save: jest.fn(),
         });
 
         const updateUser = await UserModel.findById(user._id);
@@ -67,7 +66,6 @@ describe("PUT /articles/favorites/:articleId", () => {
         UserModel.findById.mockResolvedValueOnce({
             _id: "user123",
             favoriteArticles: ["665fc28e5f54ebc7a5401169"], //je simule un user qui a déjà un fav
-            save: jest.fn(),
         });
         ArticleModel.findById.mockResolvedValueOnce({
             _id: "665fc28e5f54ebc7a5401169",
@@ -84,11 +82,10 @@ describe("PUT /articles/favorites/:articleId", () => {
         UserModel.findById.mockResolvedValueOnce({
             _id: "user123",
             favoriteArticles: [],
-            save: jest.fn(),
         });
 
         const updateUser = await UserModel.findById(user._id);
-        expect(updateUser.favoriteArticles.map(id => id.toString())) //obligée de mapper pour pour avoir des strings et pas des objectID ??
+        expect(updateUser.favoriteArticles.map(id => id.toString())) //obligée de mapper pour avoir des strings et pas des objectID ??
         .not.toContain(article._id.toString());
     });
 
