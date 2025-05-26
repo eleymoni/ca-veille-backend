@@ -49,7 +49,7 @@ exports.register = tryCatch(async (req, res) => {
 
     await UserModel.updateOne({ _id: createdUser._id }, { token: token });
 
-    return res.status(201).json({ result: true, token });
+    return res.status(201).json({ result: true, user: newUser, token });
 });
 
 exports.login = tryCatch(async (req, res) => {
