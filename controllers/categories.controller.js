@@ -17,9 +17,12 @@ exports.getUserArticles = tryCatch(async (req, res) => {
             .json({ result: false, error: "Missing categories ids" });
     }
     const ids = req.query.ids?.split(",");
+    const userCategories = await UserModel.findById(user);
 
-    const categoriesList = await getGategoriesArticles(ids);
-    const userCategoriesList = await getUsersArticles(user);
+    const categoriesList = await getGategoriesArticles(
+        userCategories.categories
+    );
+    const userCategoriesList = await getUsersArticles(ids);
 
     const mergedCategories = [];
     categoriesList.map((category) =>
@@ -102,7 +105,7 @@ exports.getCategoriesByUserId = tryCatch(async (req, res) => {
             .status(404)
             .json({ result: false, error: "Users not found" });
     }
-    res.json({ result: true, users: userCategoriesList });
+    res.json({ result: true, userList: userCategoriesList });
 });
 
 exports.getPopularUsers = tryCatch(async (req, res) => {
