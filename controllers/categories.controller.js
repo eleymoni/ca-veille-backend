@@ -11,19 +11,17 @@ const {
 // EXPORTS
 exports.getUserArticles = tryCatch(async (req, res) => {
     const user = req.id;
-    if (!req.query.ids) {
-        return res
-            .status(400)
-            .json({ result: false, error: "Missing categories ids" });
-    }
-    const ids = req.query.ids?.split(",");
+
+    const ids = req.query.ids
+        ?.split(",")
+        .filter((id) => id && id.trim().length > 0);
     const userCategories = await UserModel.findById(user);
 
     const categoriesList = await getGategoriesArticles(
         userCategories.categories
     );
-    const userCategoriesList = await getUsersArticles(ids);
-
+    const userCategoriesList =
+        ids && ids.length > 0 ? await getUsersArticles(ids) : [];
     const mergedCategories = [];
     categoriesList.map((category) =>
         category.articles.map((article) => {
