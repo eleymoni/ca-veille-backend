@@ -5,11 +5,14 @@ const { checkBody } = require("../modules/checkBody");
 const { tryCatch } = require("../utils/tryCatch");
 
 const EMAIL_REGEX = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g;
+const USERNAME_REGEX = /^[0-9A-Za-z]{6,16}$/;
 
 function generateAccessToken(id) {
     /* 
-        3 paramètres à récupérer pour l'encodage:
-        1/ les propriétés à encoder, ici ça sera uniquement l'id, 2/ la clé secrète, 3/ le délai d'expiration du token
+        Il y a 3 paramètres à récupérer pour l'encodage du token:
+        1/ les propriétés à encoder, ici ça sera uniquement l'id
+        2/ la clé secrète
+        3/ le délai d'expiration du token
     */
     return jwt.sign({ id }, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
@@ -17,8 +20,6 @@ function generateAccessToken(id) {
 }
 
 exports.register = tryCatch(async (req, res) => {
-    const { username, email, password } = req.body;
-
     // Check for empty or missing fields
     if (!checkBody(req.body, ["username", "email", "password"])) {
         return res
@@ -26,14 +27,11 @@ exports.register = tryCatch(async (req, res) => {
             .json({ result: false, error: "Missing or empty fields" });
     }
 
-    // Ckeck for the email address format
-    if (!EMAIL_REGEX.test(email))
-        return res
-            .status(422)
-            .json({ result: false, error: "Wrong email address format" });
+    const { username, email, password } = req.body;
+    const formatedEmail = email.toLowerCase();
 
     // Check if user exists in DB
-    const duplicate = await UserModel.findOne({ email });
+    const duplicate = await UserModel.findOne({ email: formatedEmail });
     if (duplicate) {
         return res
             .status(409)
@@ -46,7 +44,7 @@ exports.register = tryCatch(async (req, res) => {
 
     const newUser = new UserModel({
         username,
-        email,
+        email: formatedEmail,
         password: hashedPassword,
     });
 
@@ -56,7 +54,7 @@ exports.register = tryCatch(async (req, res) => {
     const token = generateAccessToken(createdUser._id);
 
     const updatedUser = await UserModel.findOneAndUpdate(
-        { _id: createdUser._id },
+        { email: formatedEmail },
         { token: token },
         { new: true } // Retourne l'utilisateur mis à jour
     );
@@ -73,8 +71,6 @@ exports.register = tryCatch(async (req, res) => {
 });
 
 exports.login = tryCatch(async (req, res) => {
-    const { email, password } = req.body;
-
     // Check for empty or missing fields
     if (!checkBody(req.body, ["email", "password"])) {
         return res
@@ -82,18 +78,14 @@ exports.login = tryCatch(async (req, res) => {
             .json({ result: false, error: "Missing or empty fields" });
     }
 
-    // Ckeck for the email address format
-    if (!EMAIL_REGEX.test(email))
-        return res
-            .status(422)
-            .json({ result: false, error: "Wrong email address format" });
+    const { email, password } = req.body;
 
     // Check if user exists in DB
     const foundUser = await UserModel.findOne({ email });
     if (!foundUser || !bcrypt.compareSync(password, foundUser.password)) {
         return res
             .status(401)
-            .json({ result: false, error: "Cannot use this email address" });
+            .json({ result: false, error: "Wrong credentials" });
     }
 
     // Token generation
