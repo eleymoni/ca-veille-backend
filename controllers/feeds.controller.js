@@ -38,10 +38,10 @@ const addFeedToBdd = async (siteUrl, categoryId, res) => {
         const articleArray = await Promise.all(
             items.map(async (item) => {
                 const newArticle = new ArticleModel({
-                    url: item?.link?.$?.href || item?.link,
+                    url: item.link?.$?.href || item.link,
                     title: item.title,
                     description: htmlToText(
-                        item?.content?._ || item?.description,
+                        item.content?._ || item.description,
                         {
                             wordwrap: false,
                             ignoreHref: true,
@@ -50,10 +50,15 @@ const addFeedToBdd = async (siteUrl, categoryId, res) => {
                     ),
                     media:
                         item["media:content"]?.$?.url ||
-                        item?.enclosure?.url ||
+                        item.enclosure?.$?.url ||
+                        item.enclosure?.url ||
                         null,
                     date: item.updated || item.pubDate,
-                    author: item.author?.name || item.author || "Inconnu",
+                    author:
+                        item.author?.name ||
+                        item.author ||
+                        item["dc:creator"] ||
+                        "Inconnu",
                     defaultMedia: logo,
                 });
                 const savedArticle = await newArticle.save();
