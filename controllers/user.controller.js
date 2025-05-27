@@ -55,5 +55,34 @@ exports.deleteUserCategory = tryCatch(async (req, res) => {
     foundUser.categories = updatedCategories;
     await foundUser.save();
 
-    return res.json(foundUser);
+    return res.json({ result: true, foundUser });
+});
+
+exports.deleteFollowedUserById = tryCatch(async (req, res) => {
+    const { followedUserId } = req.params;
+    const { id } = req;
+
+    // le même check que Mickaël lol
+    if (!id)
+        return res
+            .status(401)
+            .json({ result: false, error: "No userID found" });
+
+    const user = await UserModel.findById(id);
+
+    if (!user) {
+        return res.status(404).json({ result: false, error: "User not found" });
+    }
+
+    const updatedUser = user.followedUsers.filter(
+        (el) => el.toString() !== followedUserId
+    );
+
+    user.followedUsers = updatedUser;
+    await user.save();
+
+    res.json({
+        result: true,
+        followedUsers: user.followedUsers,
+    });
 });

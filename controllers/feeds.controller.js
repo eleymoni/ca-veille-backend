@@ -32,8 +32,18 @@ const addFeedToBdd = async (siteUrl, categoryId, res) => {
         const result = await parser.parseStringPromise(xmlData);
 
         // Étape 3 : Extraire les articles
-        const items = result?.feed?.entry || result?.rss?.channel?.item;
+        let items = result?.feed?.entry || result?.rss?.channel?.item;
         const logo = result?.feed?.logo || result?.rss?.channel?.image?.url;
+
+        // Étape 4 : Tri du plus récent au plus ancien
+        items.sort((a, b) => {
+            const dateA = new Date(a.updated || a.pubDate);
+            const dateB = new Date(b.updated || b.pubDate);
+            return dateB - dateA;
+        });
+
+        // Étape 5 : Limite à 50 articles
+        items = items.slice(0, 50);
 
         const articleArray = await Promise.all(
             items.map(async (item) => {
@@ -52,6 +62,7 @@ const addFeedToBdd = async (siteUrl, categoryId, res) => {
                         item["media:content"]?.$?.url ||
                         item.enclosure?.$?.url ||
                         item.enclosure?.url ||
+                        item.image ||
                         null,
                     date: item.updated || item.pubDate,
                     author:
