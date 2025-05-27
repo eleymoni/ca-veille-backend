@@ -27,7 +27,7 @@ exports.defaultCategories = {
         name: "Cuisine",
         color: "#FF5722",
         feeds: ["http://marmiton.org"],
-        feedsId: ["683588c45b2f0a8b0d2b5b33"],
+        feedsId: ["6835ec1f18715e60f7171658"],
     },
     science: {
         name: "Science",
