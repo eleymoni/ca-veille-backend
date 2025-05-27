@@ -183,6 +183,42 @@ exports.createCategory = tryCatch(async (req, res) => {
     return res.status(200).json({ result: true, category: newCategory });
 });
 
+// create a fefault category from a predefined list
+const { defaultCategories } = require("../utils/defaultCategories");
+
+exports.createDefaultCategories = tryCatch(async (req, res) => {
+    const user = req.id;
+    const categoriesNames = req.body.names;
+    if (!categoriesNames || categoriesNames.length === 0) {
+        return res
+            .status(400)
+            .json({ result: false, error: "Missing or empty fields" });
+    }
+
+    const categoriesID = [];
+    const newCategories = await Promise.all(
+        categoriesNames.map(async (category) => {
+            if (!defaultCategories[category]) {
+                return null;
+            }
+            const { name, color, feedsId } = defaultCategories[category];
+            const newCategory = await CategoryModel.create({
+                name: name.trim(),
+                color: color.trim(),
+                ownerId: user.trim(),
+                feeds: feedsId,
+            });
+            await UserModel.findByIdAndUpdate(user, {
+                $addToSet: { categories: newCategory._id },
+            });
+            categoriesID.push(newCategory._id);
+        })
+    );
+
+    await Promise.all(newCategories); // Ensure all operations are completed
+    return res.status(200).json({ result: true, category: categoriesID });
+});
+
 // updata color of the category if name is different
 exports.updateColorCategory = tryCatch(async (req, res) => {
     if (!checkBody(req.body, ["categoryId", "color"])) {
