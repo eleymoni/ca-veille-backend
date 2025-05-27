@@ -4,6 +4,8 @@ const UserModel = require("../models/users.model");
 const { checkBody } = require("../modules/checkBody");
 const { tryCatch } = require("../utils/tryCatch");
 
+const EMAIL_REGEX = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g;
+
 function generateAccessToken(id) {
     /* 
         3 paramètres à récupérer pour l'encodage:
@@ -23,6 +25,12 @@ exports.register = tryCatch(async (req, res) => {
             .status(400)
             .json({ result: false, error: "Missing or empty fields" });
     }
+
+    // Ckeck for the email address format
+    if (!EMAIL_REGEX.test(email))
+        return res
+            .status(422)
+            .json({ result: false, error: "Wrong email address format" });
 
     // Check if user exists in DB
     const duplicate = await UserModel.findOne({ email });
@@ -73,6 +81,12 @@ exports.login = tryCatch(async (req, res) => {
             .status(400)
             .json({ result: false, error: "Missing or empty fields" });
     }
+
+    // Ckeck for the email address format
+    if (!EMAIL_REGEX.test(email))
+        return res
+            .status(422)
+            .json({ result: false, error: "Wrong email address format" });
 
     // Check if user exists in DB
     const foundUser = await UserModel.findOne({ email });
