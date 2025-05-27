@@ -188,7 +188,7 @@ const { defaultCategories } = require("../utils/defaultCategories");
 
 exports.createDefaultCategories = tryCatch(async (req, res) => {
     const user = req.id;
-    const categoriesNames = req.body.names;
+    const categoriesNames = req.body.categoriesNames;
     if (!categoriesNames || categoriesNames.length === 0) {
         return res
             .status(400)
@@ -216,7 +216,7 @@ exports.createDefaultCategories = tryCatch(async (req, res) => {
     );
 
     await Promise.all(newCategories); // Ensure all operations are completed
-    return res.status(200).json({ result: true, category: categoriesID });
+    return res.status(200).json({ result: true, categoriesID });
 });
 
 // updata color of the category if name is different
