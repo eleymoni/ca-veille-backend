@@ -18,7 +18,9 @@ const makeAgent = (insecure = false) =>
     });
 
 const addFeedToBdd = async (siteUrl, categoryId, res) => {
-    let feedCreated = await FeedModel.findOne({ url: siteUrl });
+    const domain = siteUrl.replace(/^https?:\/\//, "").replace(/^www\./, "");
+    const regexUrl = new RegExp(`^https?://(?:www\\.)?${domain}`, "i");
+    let feedCreated = await FeedModel.findOne({ url: { $regex: regexUrl } });
 
     if (!feedCreated) {
         // Étape 1 : Faire une requête HTTP pour récupérer le flux RSS
