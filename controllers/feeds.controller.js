@@ -76,7 +76,7 @@ const addFeedToBdd = async (siteUrl, categoryId, res) => {
     });
 
     return res.status(200).json({
-        success: true,
+        result: true,
         feedId: feedCreated._id,
         feedName: feedCreated.name,
     });
