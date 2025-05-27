@@ -39,3 +39,21 @@ exports.getFollowedUsers = tryCatch(async (req, res) => {
 
     res.status(200).json(user.followedUsers);
 });
+
+exports.deleteUserCategory = tryCatch(async (req, res) => {
+    const { categoryId } = req.params;
+
+    const foundUser = await UserModel.findOne({ _id: req.id });
+
+    if (!foundUser)
+        return res.status(403).json({ result: false, error: "Not Authorized" });
+
+    const updatedCategories = foundUser.categories.filter(
+        (el) => el.toString() !== categoryId
+    );
+
+    foundUser.categories = updatedCategories;
+    await foundUser.save();
+
+    return res.json(foundUser);
+});

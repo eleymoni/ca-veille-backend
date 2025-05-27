@@ -29,11 +29,11 @@ app.use("/", indexRouter);
 app.use("/auth", authRouter);
 app.use(authMiddleware);
 app.use("/users", userRouter);
+app.use("/categories", categoriesRouter);
 
 app.use("/feeds", feedsRouter);
 app.use("/articles", articlesRouter);
 app.use("/logout", logoutRouter);
-app.use("/categories", categoriesRouter);
 
 app.use(errorHandler);
 

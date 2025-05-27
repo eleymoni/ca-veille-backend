@@ -3,6 +3,8 @@ const FeedModel = require("../models/feeds.model");
 const UserModel = require("../models/users.model");
 const { checkBody } = require("../modules/checkBody");
 const { tryCatch } = require("../utils/tryCatch");
+// create a fefault category from a predefined list
+const { defaultCategories } = require("../utils/defaultCategories");
 const {
     getGategoriesArticles,
     getUsersArticles,
@@ -183,9 +185,6 @@ exports.createCategory = tryCatch(async (req, res) => {
     return res.status(200).json({ result: true, category: newCategory });
 });
 
-// create a fefault category from a predefined list
-const { defaultCategories } = require("../utils/defaultCategories");
-
 exports.createDefaultCategories = tryCatch(async (req, res) => {
     const user = req.id;
     const categoriesNames = req.body.categoriesNames;
@@ -279,4 +278,28 @@ exports.updateNameCategory = tryCatch(async (req, res) => {
         name: name.trim(),
     });
     return res.status(200).json({ result: true });
+});
+
+exports.deleteFeedFromCategory = tryCatch(async (req, res) => {
+    const { categoryId, feedId } = req.params;
+    const { id } = req;
+
+    const foundCategory = await CategoryModel.findById(categoryId);
+    if (!foundCategory)
+        return res.json({ result: false, error: "Category not found" });
+
+    if (foundCategory.ownerId !== id)
+        return res.status(403).json({
+            result: false,
+            error: "You can only delete the feeds of your category",
+        });
+
+    const updatedCategory = foundCategory.feeds.filter(
+        (el) => el.toString() !== feedId
+    );
+
+    foundCategory.feeds = updatedCategory;
+    await foundCategory.save();
+
+    return res.json({ result: true, foundCategory });
 });
