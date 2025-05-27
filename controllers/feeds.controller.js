@@ -32,7 +32,7 @@ const addFeedToBdd = async (siteUrl, categoryId, res) => {
         const result = await parser.parseStringPromise(xmlData);
 
         // Étape 3 : Extraire les articles
-        const items = result?.feed?.entry || result?.rss?.channel?.item;
+        let items = result?.feed?.entry || result?.rss?.channel?.item;
         const logo = result?.feed?.logo || result?.rss?.channel?.image?.url;
 
         // Étape 4 : Tri du plus récent au plus ancien
