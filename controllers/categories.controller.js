@@ -111,7 +111,7 @@ exports.getCategoriesByUserId = tryCatch(async (req, res) => {
 exports.getPopularUsers = tryCatch(async (req, res) => {
     const users = await UserModel.find({
         isPublic: true,
-        followers: { $gt: 0 },
+        // followers: { $gt: 0 },
         //limit to 100 users
     }).limit(100);
 
@@ -302,4 +302,33 @@ exports.deleteFeedFromCategory = tryCatch(async (req, res) => {
     await foundCategory.save();
 
     return res.json({ result: true, foundCategory });
+});
+
+exports.updateColorNameCategory = tryCatch(async (req, res) => {
+    if (!checkBody(req.body, ["categoryId", "color", "name"])) {
+        return res
+            .status(400)
+            .json({ result: false, error: "Missing or empty fields" });
+    }
+    const user = req.id;
+    const { color, name, categoryId } = req.body;
+    const findCategory = await CategoryModel.findById(categoryId);
+    if (!findCategory) {
+        return res
+            .status(404)
+            .json({ result: false, error: "Category not found" });
+    }
+    if (findCategory.ownerId.toString() !== user) {
+        return res.status(401).json({ result: false, error: "Not authorized" });
+    }
+    // if (findCategory.color.toString() === color.trim()) {
+    //     return res
+    //         .status(401)
+    //         .json({ result: false, error: "Color already in use" });
+    // }
+    const updatedCategory = await CategoryModel.findByIdAndUpdate(categoryId, {
+        color: color.trim(),
+        name: name.trim(),
+    });
+    return res.status(200).json({ result: true });
 });

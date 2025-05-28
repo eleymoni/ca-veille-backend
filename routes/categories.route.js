@@ -10,6 +10,7 @@ const {
     getUserArticles,
     createDefaultCategories,
     deleteFeedFromCategory,
+    updateColorNameCategory,
 } = require("../controllers/categories.controller");
 
 var router = express.Router();
@@ -24,6 +25,7 @@ router.delete("/:categoryId", deleteCategoryById);
 router.post("/newCategory", createCategory);
 router.put("/color", updateColorCategory);
 router.put("/name", updateNameCategory);
+router.put("/update", updateColorNameCategory);
 router.delete("/:categoryId/feed/:feedId", deleteFeedFromCategory);
 
 module.exports = router;
