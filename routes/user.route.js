@@ -5,6 +5,7 @@ const {
     getEmail,
     deleteUserCategory,
     deleteFollowedUserById,
+    addFollowedUserById,
 } = require("../controllers/user.controller");
 var router = express.Router();
 
@@ -13,5 +14,6 @@ router.get("/email", getEmail);
 router.delete("/", deleteUser);
 router.delete("/category/:categoryId", deleteUserCategory);
 router.delete("/followed/:followedUserId", deleteFollowedUserById);
+router.post("/followed/:userToFollowId", addFollowedUserById);
 
 module.exports = router;

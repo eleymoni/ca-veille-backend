@@ -68,23 +68,40 @@ exports.deleteFollowedUserById = tryCatch(async (req, res) => {
     const { followedUserId } = req.params;
     const { id } = req;
 
-    // le même check que Mickaël lol
-    if (!id)
-        return res
-            .status(401)
-            .json({ result: false, error: "No userID found" });
-
     const user = await UserModel.findById(id);
 
     if (!user) {
         return res.status(404).json({ result: false, error: "User not found" });
-    }
+    };
 
     const updatedUser = user.followedUsers.filter(
         (el) => el.toString() !== followedUserId
     );
 
     user.followedUsers = updatedUser;
+    await user.save();
+
+    res.json({
+        result: true,
+        followedUsers: user.followedUsers,
+    });
+});
+
+exports.addFollowedUserById = tryCatch(async (req, res) => {
+    const { userToFollowId} = req.params;
+    const { id } = req;
+
+    const user = await UserModel.findById(id);
+
+    if (!user) {
+        return res.status(404).json({ result: false, error: "User not found" });
+    };
+
+    if (user.followedUsers.includes(userToFollowId)) {
+        return res.status(400).json({ result: false, error: "User already followed" });
+    };
+
+    user.followedUsers.push(userToFollowId);
     await user.save();
 
     res.json({
