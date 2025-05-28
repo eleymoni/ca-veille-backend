@@ -1,9 +1,9 @@
 const { tryCatch } = require("../utils/tryCatch");
 const UserModel = require("../models/users.model");
+const CategoryModel = require("../models/categories.model");
 
 exports.deleteUser = tryCatch(async (req, res) => {
     const { id } = req;
-    const { userId } = req.params;
 
     // Check if an id is sent by the auth middleware
     if (!id)
@@ -11,15 +11,10 @@ exports.deleteUser = tryCatch(async (req, res) => {
             .status(401)
             .json({ result: false, error: "No userID found" });
 
-    // Check if the user is allowed to perform the action
-    if (id !== userId)
-        return res.status(403).json({
-            result: false,
-            error: "You can delete only your account",
-        });
+    await CategoryModel.deleteMany({ ownerId: id });
 
     // Check if the user exists in the db to delete it
-    const foundUser = await UserModel.findByIdAndDelete(userId);
+    const foundUser = await UserModel.findByIdAndDelete(id);
     if (!foundUser)
         return res
             .status(404)
