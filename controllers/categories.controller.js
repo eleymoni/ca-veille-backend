@@ -150,6 +150,11 @@ exports.deleteCategoryById = tryCatch(async (req, res) => {
 
     await CategoryModel.deleteOne({ _id: categoryId });
 
+    await UserModel.updateOne(
+        { _id: user },
+        { $pull: { categories: categoryId } }
+    );
+
     return res.status(200).json({ result: true });
 });
 
