@@ -3,7 +3,6 @@ const {
     deleteUser,
     getFollowedUsers,
     getEmail,
-    getIsPublic,
     deleteUserCategory,
     deleteFollowedUserById,
     addFollowedUserById,
@@ -13,7 +12,6 @@ var router = express.Router();
 
 router.get("/followed/:userId", getFollowedUsers);
 router.get("/email", getEmail);
-router.get("/isPublic", getIsPublic);
 router.delete("/", deleteUser);
 router.delete("/category/:categoryId", deleteUserCategory);
 router.delete("/followed/:followedUserId", deleteFollowedUserById);
