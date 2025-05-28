@@ -46,6 +46,17 @@ exports.getEmail = tryCatch(async (req, res) => {
     res.status(200).json(user.email);
 });
 
+exports.getIsPublic = tryCatch(async (req, res) => {
+    const userId = req.id;
+    const user = await UserModel.findById(userId);
+
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(user.isPublic);
+});
+
 exports.deleteUserCategory = tryCatch(async (req, res) => {
     const { categoryId } = req.params;
 
@@ -72,7 +83,7 @@ exports.deleteFollowedUserById = tryCatch(async (req, res) => {
 
     if (!user) {
         return res.status(404).json({ result: false, error: "User not found" });
-    };
+    }
 
     const updatedUser = user.followedUsers.filter(
         (el) => el.toString() !== followedUserId
@@ -88,18 +99,20 @@ exports.deleteFollowedUserById = tryCatch(async (req, res) => {
 });
 
 exports.addFollowedUserById = tryCatch(async (req, res) => {
-    const { userToFollowId} = req.params;
+    const { userToFollowId } = req.params;
     const { id } = req;
 
     const user = await UserModel.findById(id);
 
     if (!user) {
         return res.status(404).json({ result: false, error: "User not found" });
-    };
+    }
 
     if (user.followedUsers.includes(userToFollowId)) {
-        return res.status(400).json({ result: false, error: "User already followed" });
-    };
+        return res
+            .status(400)
+            .json({ result: false, error: "User already followed" });
+    }
 
     user.followedUsers.push(userToFollowId);
     await user.save();
@@ -108,4 +121,18 @@ exports.addFollowedUserById = tryCatch(async (req, res) => {
         result: true,
         followedUsers: user.followedUsers,
     });
+});
+
+exports.toggleIsPublic = tryCatch(async (req, res) => {
+    const userId = req.id;
+    const user = await UserModel.findById(userId);
+
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+
+    user.isPublic = !user.isPublic;
+    await user.save();
+
+    res.status(200).json(user.isPublic);
 });
