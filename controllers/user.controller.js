@@ -40,6 +40,17 @@ exports.getFollowedUsers = tryCatch(async (req, res) => {
     res.status(200).json(user.followedUsers);
 });
 
+exports.getEmail = tryCatch(async (req, res) => {
+    const userId = req.id;
+    const user = await UserModel.findById(userId);
+
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(user.email);
+});
+
 exports.deleteUserCategory = tryCatch(async (req, res) => {
     const { categoryId } = req.params;
 
