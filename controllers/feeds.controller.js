@@ -59,10 +59,10 @@ const addFeedToBdd = async (siteUrl, categoryId, res) => {
                         }
                     ),
                     media:
-                        item["media:content"]?.$?.url ||
                         item.enclosure?.$?.url ||
                         item.enclosure?.url ||
                         item.image ||
+                        item["media:content"]?.$?.url ||
                         null,
                     date: item.updated || item.pubDate,
                     author:
