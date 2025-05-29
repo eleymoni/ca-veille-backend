@@ -170,6 +170,12 @@ exports.updateUserName = tryCatch(async (req, res) => {
     }
     const { username } = req.body;
 
+    if (username.trim() === "") {
+        return res
+            .status(400)
+            .json({ result: false, error: "Problem with username" });
+    }
+
     // Check if the user exists in db
     const foundUser = await UserModel.findByIdAndUpdate(
         { _id: id },
