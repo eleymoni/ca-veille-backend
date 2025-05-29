@@ -104,7 +104,7 @@ exports.createFeed = tryCatch(async (req, res) => {
     if (!checkBody(req.body, ["url", "categoryId"])) {
         return res
             .status(400)
-            .json({ result: false, error: "Missing or empty fields" });
+            .json({ result: false, error: "Champs manquants ou vides" });
     }
 
     const { url, categoryId } = req.body;
@@ -115,14 +115,15 @@ exports.createFeed = tryCatch(async (req, res) => {
     if (!urlRegex.test(query)) {
         return res.status(400).json({
             result: false,
-            error: "l'url entrer n'est pas valide",
+            error: "L'URL entrée n'est pas valide",
         });
     }
 
     if (!(await CategoryModel.findById(categoryId))) {
-        return res
-            .status(400)
-            .json({ result: false, error: "categoryId invalide" });
+        return res.status(404).json({
+            result: false,
+            error: "Catégorie introuvable",
+        });
     }
 
     /* ----- Détection automatique avec rss-finder ----- */
@@ -197,25 +198,26 @@ exports.createFeed = tryCatch(async (req, res) => {
             return addFeedToBdd(candidate, categoryId, res);
         }
     }
-    return res.status(400).json({
+    return res.status(422).json({
         result: false,
-        error: "Aucun feed n'as était trouvé pour cette URL",
+        error: "Aucun feed n'a été trouvé pour cette URL",
     });
 });
 
 exports.getFeedsByCategory = tryCatch(async (req, res) => {
     const categoryId = req.params.categoryId;
     if (!categoryId) {
-        return res
-            .status(400)
-            .json({ result: false, error: "Missing categoryId" });
+        return res.status(400).json({
+            result: false,
+            error: "Identifiant de la catégorie manquant",
+        });
     }
 
     const category = await CategoryModel.findById(categoryId).populate("feeds");
     if (!category) {
         return res
             .status(404)
-            .json({ result: false, error: "Category not found" });
+            .json({ result: false, error: "Catégorie introuvable" });
     }
 
     res.status(200).json({ result: true, feeds: category.feeds });
