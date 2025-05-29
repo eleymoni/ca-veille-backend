@@ -105,7 +105,7 @@ exports.addFollowedUserById = tryCatch(async (req, res) => {
     const { id } = req;
 
     const user = await UserModel.findById(id);
-    const followedUser = await UserModel.findById(followedUserId);
+    const followedUser = await UserModel.findById(userToFollowId);
 
     if (!user)
         return res.status(404).json({ result: false, error: "User not found" });
