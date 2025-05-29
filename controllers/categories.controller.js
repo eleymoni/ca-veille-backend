@@ -292,11 +292,11 @@ exports.deleteFeedFromCategory = tryCatch(async (req, res) => {
     const foundCategory = await CategoryModel.findById(categoryId);
     if (!foundCategory)
         return res.json({ result: false, error: "Category not found" });
-
-    if (foundCategory.ownerId !== id)
+    console.log(foundCategory.ownerId.toString(), "==", id);
+    if (foundCategory.ownerId.toString() !== id)
         return res.status(403).json({
             result: false,
-            error: "You can only delete the feeds of your category",
+            error: "You can only delete the feeds of your category ${",
         });
 
     const updatedCategory = foundCategory.feeds.filter(
