@@ -79,7 +79,7 @@ exports.deleteFollowedUserById = tryCatch(async (req, res) => {
             .status(404)
             .json({ result: false, error: "Followed user not found" });
 
-    if (user.followedUsers.includes(userToFollowId))
+    if (!user.followedUsers.includes(followedUserId))
         return res
             .status(400)
             .json({ result: false, error: "This user is not followed" });
