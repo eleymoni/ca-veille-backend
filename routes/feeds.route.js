@@ -1,7 +1,12 @@
 var express = require("express");
 var router = express.Router();
-const { createFeed } = require("../controllers/feeds.controller");
+const {
+    createFeed,
+    getFeedsByCategory,
+} = require("../controllers/feeds.controller");
 
 router.post("/create", createFeed);
+
+router.get("/:categoryId", getFeedsByCategory);
 
 module.exports = router;

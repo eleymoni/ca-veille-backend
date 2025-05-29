@@ -202,3 +202,21 @@ exports.createFeed = tryCatch(async (req, res) => {
         error: "Aucun feed n'as était trouvé pour cette URL",
     });
 });
+
+exports.getFeedsByCategory = tryCatch(async (req, res) => {
+    const categoryId = req.params.categoryId;
+    if (!categoryId) {
+        return res
+            .status(400)
+            .json({ result: false, error: "Missing categoryId" });
+    }
+
+    const category = await CategoryModel.findById(categoryId).populate("feeds");
+    if (!category) {
+        return res
+            .status(404)
+            .json({ result: false, error: "Category not found" });
+    }
+
+    res.status(200).json({ result: true, feeds: category.feeds });
+});
