@@ -1,6 +1,7 @@
 const { tryCatch } = require("../utils/tryCatch");
 const UserModel = require("../models/users.model");
 const CategoryModel = require("../models/categories.model");
+const { checkBody } = require("../modules/checkBody");
 
 exports.deleteUser = tryCatch(async (req, res) => {
     const { id } = req;
@@ -144,4 +145,29 @@ exports.toggleIsPublic = tryCatch(async (req, res) => {
     await user.save();
 
     res.status(200).json(user.isPublic);
+});
+
+exports.updateUserName = tryCatch(async (req, res) => {
+    const { userId } = req.params;
+
+    // Check all fields
+    if (!checkBody(req.body, ["username"])) {
+        return res
+            .status(400)
+            .json({ result: false, error: "Missing username" });
+    }
+    const { username } = req.body;
+
+    // Check if the user exists in db
+    const foundUser = await UserModel.findByIdAndUpdate(
+        { _id: userId },
+        { username: username.trim() },
+        { new: true }
+    );
+    if (!foundUser)
+        return res
+            .status(404)
+            .json({ result: true, error: "No such user found" });
+
+    return res.json({ result: true, data: username.trim() });
 });
