@@ -160,7 +160,7 @@ exports.toggleIsPublic = tryCatch(async (req, res) => {
 });
 
 exports.updateUserName = tryCatch(async (req, res) => {
-    const { userId } = req.params;
+    const { id } = req;
 
     // Check all fields
     if (!checkBody(req.body, ["username"])) {
@@ -172,7 +172,7 @@ exports.updateUserName = tryCatch(async (req, res) => {
 
     // Check if the user exists in db
     const foundUser = await UserModel.findByIdAndUpdate(
-        { _id: userId },
+        { _id: id },
         { username: username.trim() },
         { new: true }
     );
