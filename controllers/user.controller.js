@@ -12,14 +12,26 @@ exports.deleteUser = tryCatch(async (req, res) => {
             .status(401)
             .json({ result: false, error: "No userID found" });
 
-    await CategoryModel.deleteMany({ ownerId: id });
-
     // Check if the user exists in the db to delete it
     const foundUser = await UserModel.findByIdAndDelete(id);
     if (!foundUser)
         return res
             .status(404)
             .json({ result: false, error: "such user doesn't exist" });
+
+    if (foundUser.categories.length > 0) {
+        await CategoryModel.deleteMany({ ownerId: id });
+    }
+    if (foundUser.followedUsers.length > 0) {
+        await UserModel.updateMany(
+            { _id: { $in: foundUser.followedUsers } },
+            { $inc: { followers: -1 } }
+        );
+    }
+    await UserModel.updateMany(
+        { followedUsers: id },
+        { $pull: { followedUsers: id } }
+    );
 
     return res.json({ result: true });
 });
