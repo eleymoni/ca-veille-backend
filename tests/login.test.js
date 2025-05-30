@@ -56,7 +56,7 @@ describe("POST /auth/login", () => {
         expect(res.status).toBe(401);
         expect(res.body).toEqual({
             result: false,
-            error: "Cannot use this email address",
+            error: "Wrong credentials",
         });
     });
     it("should return an error if a field is empty", async () => {
