@@ -109,9 +109,9 @@ exports.getCategoriesByUserId = tryCatch(async (req, res) => {
 });
 
 exports.getPopularUsers = tryCatch(async (req, res) => {
+    const user = req.id;
     const users = await UserModel.find({
         isPublic: true,
-        // followers: { $gt: 0 },
         //limit to 100 users
     }).limit(100);
 
@@ -120,8 +120,12 @@ exports.getPopularUsers = tryCatch(async (req, res) => {
             .status(404)
             .json({ result: false, error: "No popular users found" });
     }
+    // remove current user from the list
+    const filteredUsers = users.filter(
+        (item) => item._id.toString() !== user.toString()
+    );
     // get only ids sort by followers
-    const ids = users
+    const ids = filteredUsers
         .sort((a, b) => {
             const dateA = new Date(a.followers);
             const dateB = new Date(b.followers);
