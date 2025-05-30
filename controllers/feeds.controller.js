@@ -222,3 +222,17 @@ exports.getFeedsByCategory = tryCatch(async (req, res) => {
 
     res.status(200).json({ result: true, feeds: category.feeds });
 });
+
+exports.getAllFeedsWithCategories = tryCatch(async (req, res) => {
+    const userId = req.id;
+    const userFeeds = await CategoryModel.find({ ownerId: userId }).populate(
+        "feeds"
+    );
+    if (!userFeeds) {
+        return res
+            .status(404)
+            .json({ result: false, error: "feeds introuvable" });
+    }
+
+    res.status(200).json({ result: true, categories: userFeeds });
+});
