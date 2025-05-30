@@ -3,6 +3,10 @@ const app = require("../app");
 const mongoose = require("mongoose");
 const CategoryModel = require("../models/categories.model");
 
+jest.mock("../models/users.model", () => ({
+    findByIdAndUpdate: jest.fn().mockResolvedValue(true),
+}));
+
 jest.mock("../middlewares/auth.middleware", () => (req, res, next) => {
     req.id = "user123";
     next();
@@ -36,7 +40,15 @@ describe("POST /categories/newCategory", () => {
         jest.clearAllMocks();
         CategoryModel.findOne.mockResolvedValue(null);
         CategoryModel.create.mockImplementation((data) =>
-            Promise.resolve({ _id: "category123", feeds: [], ...data })
+            Promise.resolve({
+                _id: "category123",
+                name: data.name,
+                color: data.color,
+                ownerId: data.ownerId,
+                feeds: [],
+                save: jest.fn(),
+                toObject: jest.fn().mockReturnValue(data),
+            })
         );
     });
 
