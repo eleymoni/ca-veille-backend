@@ -125,16 +125,12 @@ exports.getPopularUsers = tryCatch(async (req, res) => {
         (item) => item._id.toString() !== user.toString()
     );
     // get only ids sort by followers
-    const ids = filteredUsers
-        .sort((a, b) => {
-            const dateA = new Date(a.followers);
-            const dateB = new Date(b.followers);
-            return dateB - dateA;
-        })
-        .map((user) => user._id);
+    const ids = filteredUsers.map((user) => user._id);
     // use common function
-    const popularsArticles = await getUsersArticles(ids);
-    res.json({ result: true, users: popularsArticles });
+    const popularsArticles = await getUsersArticles(filteredUsers);
+    // mongodb ne respectant pas l'ordre du tableau, il faut trié après le retour
+    const test = popularsArticles.sort((a, b) => b.followers - a.followers);
+    res.json({ result: true, users: test });
 });
 
 exports.deleteCategoryById = tryCatch(async (req, res) => {

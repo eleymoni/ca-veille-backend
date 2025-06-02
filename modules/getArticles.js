@@ -11,6 +11,7 @@ async function getUsersArticles(ids) {
     const userList = users.map((user) => {
         let userObject = {
             username: user.username,
+            followers: user.followers,
             _id: user._id,
             articles: [],
         };
