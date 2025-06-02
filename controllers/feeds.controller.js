@@ -1,15 +1,18 @@
+// librairie pour fetch, on récupère la reponse dans une propriété data dans exemple : const response = await axios.get(siteUrl);  const xmlData = response.data;
 const axios = require("axios");
+// librairie qui permet de parsé le xml et de récupérer en objet js
 const xml2js = require("xml2js");
 const { htmlToText } = require("html-to-text");
 const { tryCatch } = require("../utils/tryCatch");
 const { checkBody } = require("../modules/checkBody");
+// trouve le flux rss à partir d'une url
 const rssFinder = require("rss-finder");
 const https = require("https");
 const ArticleModel = require("../models/articles.model");
 const FeedModel = require("../models/feeds.model");
 const CategoryModel = require("../models/categories.model");
 
-/* Agent https (timeout + keep-alive) */
+/* Agent https (timeout + keep-alive) permet de passer la sécurité empéchant de rercupérer le flux rss, pas récommandé en prod*/
 const makeAgent = (insecure = false) =>
     new https.Agent({
         keepAlive: true,
@@ -44,7 +47,7 @@ const addFeedToBdd = async (siteUrl, categoryId, res) => {
 
         // Étape 5 : Limite à 50 articles
         items = items.slice(0, 50);
-
+        // test toutes  les balises connues en xml pour récupérer les champs
         const articleArray = await Promise.all(
             items.map(async (item) => {
                 const newArticle = new ArticleModel({
@@ -109,6 +112,7 @@ exports.createFeed = tryCatch(async (req, res) => {
 
     const { url, categoryId } = req.body;
     const query = url.trim();
+    // vérifie que c'est une url
     const urlRegex =
         /^(https?:\/\/)(?:[\p{L}\d-]+\.)+[\p{L}]{2,63}(?::\d{2,5})?(?:\/[^\s?#]*)?(?:\?[^\s#]*)?(?:#[^\s]*)?$/u;
 

@@ -1,3 +1,4 @@
+// catégories utilisées lors de l'inscription
 exports.defaultCategories = {
     tech: {
         name: "Tech",

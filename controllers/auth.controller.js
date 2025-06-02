@@ -4,8 +4,8 @@ const UserModel = require("../models/users.model");
 const { checkBody } = require("../modules/checkBody");
 const { tryCatch } = require("../utils/tryCatch");
 
-const EMAIL_REGEX = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g;
-const USERNAME_REGEX = /^[0-9A-Za-z]{6,16}$/;
+const EMAIL_REGEX = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g; // regex email, non utilisé
+const USERNAME_REGEX = /^[0-9A-Za-z]{6,16}$/; // lettres et/ou chiffres (entre 6 et 16), non utilisé
 
 function generateAccessToken(id) {
     /* 

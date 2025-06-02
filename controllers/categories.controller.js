@@ -1,9 +1,8 @@
 const CategoryModel = require("../models/categories.model");
-const FeedModel = require("../models/feeds.model");
 const UserModel = require("../models/users.model");
 const { checkBody } = require("../modules/checkBody");
 const { tryCatch } = require("../utils/tryCatch");
-// create a fefault category from a predefined list
+// create a default category from a predefined list
 const { defaultCategories } = require("../utils/defaultCategories");
 const {
     getGategoriesArticles,
@@ -13,7 +12,7 @@ const {
 // EXPORTS
 exports.getUserArticles = tryCatch(async (req, res) => {
     const user = req.id;
-
+    // récupère la query sous forme d'un tableau grace à un split(",")
     const ids = req.query.ids
         ?.split(",")
         .filter((id) => id && id.trim().length > 0);
@@ -24,6 +23,7 @@ exports.getUserArticles = tryCatch(async (req, res) => {
     );
     const userCategoriesList =
         ids && ids.length > 0 ? await getUsersArticles(ids) : [];
+    // merge des articles dans un tableau
     const mergedCategories = [];
     categoriesList.map((category) =>
         category.articles.map((article) => {
@@ -50,7 +50,7 @@ exports.getUserArticles = tryCatch(async (req, res) => {
     );
     const mergedArticles = [...mergedCategories, ...mergedUsers];
     const uniqueArticles = [];
-    // set permet de stocker des valeurs uniques
+    // set permet de stocker des valeurs uniques par id (supprime les doublons)
     const seen = new Set();
     for (const article of mergedArticles) {
         const id = article._id.toString();
@@ -151,7 +151,7 @@ exports.deleteCategoryById = tryCatch(async (req, res) => {
     if (findCategory.ownerId.toString() !== user) {
         return res.status(401).json({ result: false, error: "Not authorized" });
     }
-
+    // delete la categorie et la retire du owner
     await CategoryModel.deleteOne({ _id: categoryId });
 
     await UserModel.updateOne(
@@ -188,6 +188,7 @@ exports.createCategory = tryCatch(async (req, res) => {
     });
 
     await UserModel.findByIdAndUpdate(user, {
+        // doublon avec le regex ?
         $addToSet: { categories: newCategory._id },
     });
 
@@ -204,6 +205,7 @@ exports.createDefaultCategories = tryCatch(async (req, res) => {
     }
 
     const categoriesID = [];
+    // promise.all attends toutes les promesses avant d'aller à la suite (erreurs incluses)
     const newCategories = await Promise.all(
         categoriesNames.map(async (category) => {
             if (!defaultCategories[category]) {
@@ -250,7 +252,7 @@ exports.updateColorCategory = tryCatch(async (req, res) => {
             .status(401)
             .json({ result: false, error: "Color already in use" });
     }
-    const updatedCategory = await CategoryModel.findByIdAndUpdate(categoryId, {
+    await CategoryModel.findByIdAndUpdate(categoryId, {
         color: color.trim(),
     });
     return res.status(200).json({ result: true });
@@ -283,7 +285,7 @@ exports.updateNameCategory = tryCatch(async (req, res) => {
             .status(409)
             .json({ result: false, error: "Category already exists" });
     }
-    const updatedCategory = await CategoryModel.findByIdAndUpdate(categoryId, {
+    await CategoryModel.findByIdAndUpdate(categoryId, {
         name: name.trim(),
     });
     return res.status(200).json({ result: true });
@@ -296,7 +298,7 @@ exports.deleteFeedFromCategory = tryCatch(async (req, res) => {
     const foundCategory = await CategoryModel.findById(categoryId);
     if (!foundCategory)
         return res.json({ result: false, error: "Category not found" });
-    console.log(foundCategory.ownerId.toString(), "==", id);
+
     if (foundCategory.ownerId.toString() !== id)
         return res.status(403).json({
             result: false,
@@ -313,6 +315,7 @@ exports.deleteFeedFromCategory = tryCatch(async (req, res) => {
     return res.json({ result: true, foundCategory });
 });
 
+// les deux fonctions d'update n'étaient jamais utilisées séparément donc création d'une une fonction
 exports.updateColorNameCategory = tryCatch(async (req, res) => {
     if (!checkBody(req.body, ["categoryId", "color", "name"])) {
         return res
@@ -330,12 +333,7 @@ exports.updateColorNameCategory = tryCatch(async (req, res) => {
     if (findCategory.ownerId.toString() !== user) {
         return res.status(401).json({ result: false, error: "Not authorized" });
     }
-    // if (findCategory.color.toString() === color.trim()) {
-    //     return res
-    //         .status(401)
-    //         .json({ result: false, error: "Color already in use" });
-    // }
-    const updatedCategory = await CategoryModel.findByIdAndUpdate(categoryId, {
+    await CategoryModel.findByIdAndUpdate(categoryId, {
         color: color.trim(),
         name: name.trim(),
     });
