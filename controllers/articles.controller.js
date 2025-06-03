@@ -52,7 +52,7 @@ exports.getFavoritesArticlesByIds = tryCatch(async (req, res) => {
     if (!req.query.ids) {
         return res
             .status(400)
-            .json({ result: false, error: "Missing categories ids" });
+            .json({ result: false, error: "Missing articles ids" });
     }
     const ids = req.query.ids?.split(",");
     const articles = await ArticleModel.find({ _id: { $in: ids } });
