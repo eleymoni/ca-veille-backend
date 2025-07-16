@@ -6,7 +6,7 @@ Objectif : obtenir la certification **Concepteur Développeur d'Applications Web
 ## Description
 
 Back-end de l'application "Ca Veille", conçue pour centraliser la veille tech de manière simple, personnalisée et collaborative.  
-Il gère l’authentification, la gestion des articles, les utilisateurs et les abonnements.
+Il gère l’authentification, la gestion des articles, des feeds, des catégories, les utilisateurs et les abonnements.
 
 ## Stack technique
 
